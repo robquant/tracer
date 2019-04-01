@@ -2,6 +2,7 @@ package tracer
 
 import (
 	"math"
+	"math/rand"
 
 	"github.com/robquant/tracer/pkg/geo"
 )
@@ -38,4 +39,12 @@ func (s Sphere) Hit(r *geo.Ray, tMin, tMax float64) (bool, HitRecord) {
 		}
 	}
 	return false, HitRecord{}
+}
+
+func RandomInUnitSphere() geo.Vec3 {
+	vec := geo.NewVec3(1.0, 1.0, 1.0)
+	for vec.LenSq() >= 1.0 {
+		vec = geo.NewVec3(rand.Float64(), rand.Float64(), rand.Float64()).Mul(2.0).Sub(geo.Diag)
+	}
+	return vec
 }

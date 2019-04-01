@@ -10,9 +10,11 @@ import (
 )
 
 func color(r *geo.Ray, world tracer.Hitable) tracer.Color {
-	if hit, rec := world.Hit(r, 0.0, math.MaxFloat64); hit {
-		normal := rec.Normal()
-		return tracer.Color{geo.NewVec3(normal.X()+1, normal.Y()+1, normal.Z()+1).Mul(0.5)}
+	if hit, rec := world.Hit(r, 0.001, math.MaxFloat64); hit {
+		target := rec.P().Add(rec.Normal()).Add(tracer.RandomInUnitSphere())
+		ray := geo.NewRay(rec.P(), target.Sub(rec.P()))
+		c := color(&ray, world)
+		return (&c).Mul(0.5)
 	}
 	unitDirection := r.Dir().Normed()
 	t := 0.5 * (unitDirection.Y() + 1.0)
@@ -40,6 +42,7 @@ func main() {
 				col = col.Add(color(ray, world))
 			}
 			col.Scale(1. / float64(ns))
+			col = tracer.NewColor(math.Sqrt(col.R()), math.Sqrt(col.G()), math.Sqrt(col.B()))
 			ir := int(math.Round(255 * col.R()))
 			ig := int(math.Round(255 * col.G()))
 			ib := int(math.Round(255 * col.B()))

@@ -34,3 +34,7 @@ func (c Color) B() float64 {
 func (c *Color) Add(o Color) Color {
 	return Color{c.Vec3.Add(o.Vec3)}
 }
+
+func (c *Color) Mul(t float64) Color {
+	return Color{c.Vec3.Mul(t)}
+}

@@ -17,6 +17,10 @@ func (h HitRecord) Normal() geo.Vec3 {
 	return h.normal
 }
 
+func (h HitRecord) P() geo.Vec3 {
+	return h.p
+}
+
 type Hitable interface {
 	Hit(r *geo.Ray, tMin, tMax float64) (bool, HitRecord)
 }

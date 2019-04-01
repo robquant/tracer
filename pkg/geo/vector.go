@@ -6,6 +6,7 @@ var Origin = Vec3{0.0, 0.0, 0.0}
 var UnitX = Vec3{1.0, 0.0, 0.0}
 var UnitY = Vec3{0.0, 1.0, 0.0}
 var UnitZ = Vec3{0.0, 0.0, .0}
+var Diag = Vec3{1.0, 1.0, 1.0}
 
 // Vec3 is a three dimensional vector
 type Vec3 struct {
