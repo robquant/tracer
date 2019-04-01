@@ -1,5 +1,9 @@
 package pkg
 
+var Red = Color{UnitX}
+var Green = Color{UnitY}
+var Blue = Color{UnitZ}
+
 // Color is an RGB color triple using floats
 type Color struct {
 	Vec3
