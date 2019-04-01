@@ -1,4 +1,4 @@
-package pkg
+package geo
 
 // Ray represents a ray with an origin orig
 // and a direction dir

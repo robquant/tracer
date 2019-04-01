@@ -1,30 +1,32 @@
-package pkg
+package tracer
 
-var Red = Color{UnitX}
-var Green = Color{UnitY}
-var Blue = Color{UnitZ}
+import "github.com/robquant/tracer/pkg/geo"
+
+var Red = Color{geo.UnitX}
+var Green = Color{geo.UnitY}
+var Blue = Color{geo.UnitZ}
 
 // Color is an RGB color triple using floats
 type Color struct {
-	Vec3
+	geo.Vec3
 }
 
 // NewColor creates a new Color from RGB float values
 func NewColor(r, g, b float64) Color {
-	return Color{Vec3{r, g, b}}
+	return Color{geo.NewVec3(r, g, b)}
 }
 
 // R returns the red component of c
 func (c Color) R() float64 {
-	return c.x
+	return c.X()
 }
 
 // G returns the green component of c
 func (c Color) G() float64 {
-	return c.y
+	return c.Y()
 }
 
 // B returns the blue component of c
 func (c Color) B() float64 {
-	return c.z
+	return c.Z()
 }
