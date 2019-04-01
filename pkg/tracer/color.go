@@ -30,3 +30,7 @@ func (c Color) G() float64 {
 func (c Color) B() float64 {
 	return c.Z()
 }
+
+func (c *Color) Add(o Color) Color {
+	return Color{c.Vec3.Add(o.Vec3)}
+}

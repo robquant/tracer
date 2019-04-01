@@ -2,6 +2,7 @@ package tracer
 
 import "github.com/robquant/tracer/pkg/geo"
 
+// HitRecord
 type HitRecord struct {
 	t      float64
 	p      geo.Vec3
