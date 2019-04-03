@@ -9,13 +9,14 @@ import (
 
 // Sphere represented by center and radius
 type Sphere struct {
-	center geo.Vec3
-	radius float64
+	center   geo.Vec3
+	radius   float64
+	material Material
 }
 
 // NewSphere constructs a new Sphere
-func NewSphere(center geo.Vec3, r float64) Sphere {
-	return Sphere{center, r}
+func NewSphere(center geo.Vec3, r float64, m Material) Sphere {
+	return Sphere{center, r, m}
 }
 
 // Hit calculates if geo.Ray r hits the sphere betwenn tMin and tMax
@@ -30,12 +31,12 @@ func (s Sphere) Hit(r *geo.Ray, tMin, tMax float64) (bool, HitRecord) {
 		temp := (-b - sqrt) / a
 		if temp < tMax && temp > tMin {
 			p := r.At(temp)
-			return true, NewHitRecord(temp, p, p.Sub(s.center).Mul(1.0/s.radius))
+			return true, NewHitRecord(temp, p, p.Sub(s.center).Mul(1.0/s.radius), s.material)
 		}
 		temp = (-b + sqrt) / a
 		if temp < tMax && temp > tMin {
 			p := r.At(temp)
-			return true, NewHitRecord(temp, p, p.Sub(s.center).Mul(1.0/s.radius))
+			return true, NewHitRecord(temp, p, p.Sub(s.center).Mul(1.0/s.radius), s.material)
 		}
 	}
 	return false, HitRecord{}
