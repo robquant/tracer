@@ -36,8 +36,8 @@ func main() {
 	world := tracer.NewHitableList()
 	world = append(world, tracer.NewSphere(geo.NewVec3(0, 0, -1), 0.5, tracer.NewLambertian(0.8, 0.3, 0.3)))
 	world = append(world, tracer.NewSphere(geo.NewVec3(0, -100.5, -1), 100, tracer.NewLambertian(0.8, 0.8, 0)))
-	world = append(world, tracer.NewSphere(geo.NewVec3(1, 0, -1), 0.5, tracer.NewMetal(0.8, 0.6, 0.2)))
-	world = append(world, tracer.NewSphere(geo.NewVec3(-1, 0, -1), 0.5, tracer.NewMetal(0.8, 0.8, 0.8)))
+	world = append(world, tracer.NewSphere(geo.NewVec3(1, 0, -1), 0.5, tracer.NewMetal(0.8, 0.6, 0.2, 0.3)))
+	world = append(world, tracer.NewSphere(geo.NewVec3(-1, 0, -1), 0.5, tracer.NewMetal(0.8, 0.8, 0.8, 1.0)))
 	for j := ny - 1; j >= 0; j-- {
 		for i := 0; i < nx; i++ {
 			col := tracer.NewColor(0, 0, 0)

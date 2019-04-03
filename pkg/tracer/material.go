@@ -29,6 +29,7 @@ func (l *Lambertian) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray)
 // Metal hold albedo for a Metal surface
 type Metal struct {
 	albedo geo.Vec3
+	fuzz   float64
 }
 
 func reflect(v, n geo.Vec3) geo.Vec3 {
@@ -36,13 +37,16 @@ func reflect(v, n geo.Vec3) geo.Vec3 {
 }
 
 // NewMetal constructs a new Metal from r,g,b albedo values
-func NewMetal(ar, ag, ab float64) *Metal {
-	return &Metal{albedo: geo.NewVec3(ar, ag, ab)}
+func NewMetal(ar, ag, ab float64, fuzz float64) *Metal {
+	if fuzz > 1 {
+		fuzz = 1
+	}
+	return &Metal{albedo: geo.NewVec3(ar, ag, ab), fuzz: fuzz}
 }
 
 // Scatter implements the Material interface Scatter function for Metal
 func (m *Metal) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray) {
 	reflected := reflect(r.Dir().Normed(), h.Normal())
-	scattered := geo.NewRay(h.P(), reflected)
+	scattered := geo.NewRay(h.P(), reflected.Add(RandomInUnitSphere().Mul(m.fuzz)))
 	return scattered.Dir().Dot(h.Normal()) > 0, m.albedo, scattered
 }
