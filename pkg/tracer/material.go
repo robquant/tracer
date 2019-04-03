@@ -2,6 +2,7 @@ package tracer
 
 import (
 	"math"
+	"math/rand"
 
 	"github.com/robquant/tracer/pkg/geo"
 )
@@ -52,6 +53,12 @@ func refract(v, n geo.Vec3, refRatio float64) (bool, geo.Vec3) {
 	return false, geo.Vec3{}
 }
 
+func schlick(cosine, refIdx float64) float64 {
+	r0 := (1 - refIdx) / (1 + refIdx)
+	r0 = r0 * r0
+	return r0 + (1-r0)*math.Pow(1-cosine, 5)
+}
+
 // NewMetal constructs a new Metal from r,g,b albedo values
 func NewMetal(ar, ag, ab float64, fuzz float64) *Metal {
 	if fuzz > 1 {
@@ -80,15 +87,25 @@ func (d *Dielectric) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray)
 	attenuation := geo.NewVec3(1.0, 1.0, 1.0)
 	var outwardNormal geo.Vec3
 	var refRatio float64
-	if r.Dir().Dot(h.Normal()) > 0 {
+	var cosine float64
+	reflectionProb := 1.0
+	s := r.Dir().Dot(h.Normal())
+	if s > 0 {
 		outwardNormal = h.Normal().Mul(-1)
 		refRatio = d.refIdx
+		cosine = d.refIdx * s / r.Dir().Len()
 	} else {
 		outwardNormal = h.Normal()
 		refRatio = 1.0 / d.refIdx
+		cosine = -s / r.Dir().Len()
 	}
-	if refracted, refractedDir := refract(r.Dir(), outwardNormal, refRatio); refracted {
-		return true, attenuation, geo.NewRay(h.P(), refractedDir)
+	var refracted bool
+	var refractedDir geo.Vec3
+	if refracted, refractedDir = refract(r.Dir(), outwardNormal, refRatio); refracted {
+		reflectionProb = schlick(cosine, d.refIdx)
 	}
-	return true, attenuation, geo.NewRay(h.P(), reflected)
+	if rand.Float64() < reflectionProb {
+		return true, attenuation, geo.NewRay(h.P(), reflected)
+	}
+	return true, attenuation, geo.NewRay(h.P(), refractedDir)
 }
