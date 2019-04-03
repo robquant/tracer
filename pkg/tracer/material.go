@@ -1,6 +1,10 @@
 package tracer
 
-import "github.com/robquant/tracer/pkg/geo"
+import (
+	"math"
+
+	"github.com/robquant/tracer/pkg/geo"
+)
 
 // Material is an interface to describe light scattering on different materials
 type Material interface {
@@ -36,6 +40,18 @@ func reflect(v, n geo.Vec3) geo.Vec3 {
 	return v.Sub(n.Mul(2 * v.Dot(n)))
 }
 
+func refract(v, n geo.Vec3, refRatio float64) (bool, geo.Vec3) {
+	uv := v.Normed()
+	dt := uv.Dot(n)
+	discriminant := 1.0 - refRatio*refRatio*(1-dt*dt)
+	if discriminant > 0 {
+		refracted := uv.Sub(n.Mul(dt)).Mul(refRatio)
+		refracted = refracted.Sub(n.Mul(math.Sqrt(discriminant)))
+		return true, refracted
+	}
+	return false, geo.Vec3{}
+}
+
 // NewMetal constructs a new Metal from r,g,b albedo values
 func NewMetal(ar, ag, ab float64, fuzz float64) *Metal {
 	if fuzz > 1 {
@@ -49,4 +65,30 @@ func (m *Metal) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray) {
 	reflected := reflect(r.Dir().Normed(), h.Normal())
 	scattered := geo.NewRay(h.P(), reflected.Add(RandomInUnitSphere().Mul(m.fuzz)))
 	return scattered.Dir().Dot(h.Normal()) > 0, m.albedo, scattered
+}
+
+type Dielectric struct {
+	refIdx float64
+}
+
+func NewDielectric(refIdx float64) *Dielectric {
+	return &Dielectric{refIdx: refIdx}
+}
+
+func (d *Dielectric) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray) {
+	reflected := reflect(r.Dir(), h.Normal())
+	attenuation := geo.NewVec3(1.0, 1.0, 1.0)
+	var outwardNormal geo.Vec3
+	var refRatio float64
+	if r.Dir().Dot(h.Normal()) > 0 {
+		outwardNormal = h.Normal().Mul(-1)
+		refRatio = d.refIdx
+	} else {
+		outwardNormal = h.Normal()
+		refRatio = 1.0 / d.refIdx
+	}
+	if refracted, refractedDir := refract(r.Dir(), outwardNormal, refRatio); refracted {
+		return true, attenuation, geo.NewRay(h.P(), refractedDir)
+	}
+	return true, attenuation, geo.NewRay(h.P(), reflected)
 }
