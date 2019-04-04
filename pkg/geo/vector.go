@@ -38,7 +38,7 @@ func (v Vec3) Neg() Vec3 {
 	return Vec3{-v.x, -v.y, -v.z}
 }
 
-// Add return a new Vec3 which is the sum of o to v
+// Add return a new Vec3 which is the sum of o and v
 func (v Vec3) Add(o Vec3) Vec3 {
 	return Vec3{v.x + o.x, v.y + o.y, v.z + o.z}
 }

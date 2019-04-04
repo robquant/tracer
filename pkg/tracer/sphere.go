@@ -15,19 +15,19 @@ type Sphere struct {
 }
 
 // NewSphere constructs a new Sphere
-func NewSphere(center geo.Vec3, r float64, m Material) Sphere {
-	return Sphere{center, r, m}
+func NewSphere(center geo.Vec3, r float64, m Material) *Sphere {
+	return &Sphere{center, r, m}
 }
 
 // Hit calculates if geo.Ray r hits the sphere betwenn tMin and tMax
-func (s Sphere) Hit(r *geo.Ray, tMin, tMax float64) (bool, HitRecord) {
+func (s *Sphere) Hit(r *geo.Ray, tMin, tMax float64) (bool, HitRecord) {
 	oc := r.Orig().Sub(s.center)
-	a := r.Dir().Dot(r.Dir())
+	a := r.LenSq()
 	b := r.Dir().Dot(oc)
-	c := oc.Dot(oc) - s.radius*s.radius
+	c := oc.LenSq() - s.radius*s.radius
 	discriminant := b*b - a*c
 	if discriminant > 0 {
-		sqrt := math.Sqrt(b*b - a*c)
+		sqrt := math.Sqrt(discriminant)
 		temp := (-b - sqrt) / a
 		if temp < tMax && temp > tMin {
 			p := r.At(temp)
