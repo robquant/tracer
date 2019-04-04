@@ -32,7 +32,11 @@ func main() {
 	ny := 200
 	ns := 10
 	fmt.Printf("P3 %d %d\n255\n", nx, ny)
-	camera := tracer.NewCamera(geo.NewVec3(-2, 2, 1), geo.NewVec3(0, 0, -1), geo.UnitY, 90, float64(nx)/float64(ny))
+	lookAt := geo.NewVec3(0, 0, -1)
+	lookFrom := geo.NewVec3(3, 3, 2)
+	distToFocus := lookFrom.Sub(lookAt).Len()
+	aperture := 2.0
+	camera := tracer.NewCamera(lookFrom, lookAt, geo.UnitY, 20, float64(nx)/float64(ny), aperture, distToFocus)
 	world := tracer.NewHitableList()
 	world = append(world, tracer.NewSphere(geo.NewVec3(0, 0, -1), 0.5, tracer.NewLambertian(0.8, 0.3, 0.3)))
 	world = append(world, tracer.NewSphere(geo.NewVec3(0, -100.5, -1), 100, tracer.NewLambertian(0.8, 0.8, 0)))
