@@ -1,14 +1,10 @@
 package tracer
 
 import (
+	"math"
+
 	"github.com/robquant/tracer/pkg/geo"
 )
-
-var DefaultCamera = Camera{
-	origin:          geo.Origin,
-	lowerLeftCorner: geo.NewVec3(-2.0, -1.0, -1.0),
-	horizontal:      geo.NewVec3(4.0, 0.0, 0.0),
-	vertical:        geo.NewVec3(0.0, 2.0, 0.0)}
 
 type Camera struct {
 	origin          geo.Vec3
@@ -17,8 +13,24 @@ type Camera struct {
 	vertical        geo.Vec3
 }
 
-func (c *Camera) GetRay(u, v float64) *geo.Ray {
-	dir := c.lowerLeftCorner.Add(c.horizontal.Mul(u).Add(c.vertical.Mul(v)))
-	r := geo.NewRay(geo.Origin, dir)
+// NewCamera constructs a new Camera from the vertical
+// field of view in degrees, and the aspect ratio
+func NewCamera(lookFrom, lookAt, vUp geo.Vec3, vertFov, aspectRatio float64) *Camera {
+	theta := math.Pi / 180 * vertFov
+	halfHeight := math.Tan(theta / 2)
+	halfWidth := aspectRatio * halfHeight
+	w := lookFrom.Sub(lookAt).Normed()
+	u := vUp.Cross(w).Normed()
+	v := w.Cross(u)
+	lowerLeftCorner := lookFrom.Sub(u.Mul(halfWidth)).Sub(v.Mul(halfHeight)).Sub(w)
+	horizontal := u.Mul(2 * halfWidth)
+	vertical := v.Mul(2 * halfHeight)
+
+	return &Camera{lookFrom, lowerLeftCorner, horizontal, vertical}
+}
+
+func (c *Camera) GetRay(s, t float64) *geo.Ray {
+	dir := c.lowerLeftCorner.Add(c.horizontal.Mul(s)).Add(c.vertical.Mul(t)).Sub(c.origin)
+	r := geo.NewRay(c.origin, dir)
 	return &r
 }

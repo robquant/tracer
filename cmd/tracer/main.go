@@ -30,15 +30,14 @@ func color(r *geo.Ray, world tracer.Hitable, depth int) tracer.Color {
 func main() {
 	nx := 400
 	ny := 200
-	ns := 100
+	ns := 10
 	fmt.Printf("P3 %d %d\n255\n", nx, ny)
-	camera := tracer.DefaultCamera
+	camera := tracer.NewCamera(geo.NewVec3(-2, 2, 1), geo.NewVec3(0, 0, -1), geo.UnitY, 90, float64(nx)/float64(ny))
 	world := tracer.NewHitableList()
 	world = append(world, tracer.NewSphere(geo.NewVec3(0, 0, -1), 0.5, tracer.NewLambertian(0.8, 0.3, 0.3)))
 	world = append(world, tracer.NewSphere(geo.NewVec3(0, -100.5, -1), 100, tracer.NewLambertian(0.8, 0.8, 0)))
 	world = append(world, tracer.NewSphere(geo.NewVec3(1, 0, -1), 0.5, tracer.NewMetal(0.8, 0.6, 0.2, 0)))
 	world = append(world, tracer.NewSphere(geo.NewVec3(-1, 0, -1), 0.5, tracer.NewDielectric(1.5)))
-	world = append(world, tracer.NewSphere(geo.NewVec3(-1, 0, -1), -0.45, tracer.NewDielectric(1.5)))
 	for j := ny - 1; j >= 0; j-- {
 		for i := 0; i < nx; i++ {
 			col := tracer.NewColor(0, 0, 0)
