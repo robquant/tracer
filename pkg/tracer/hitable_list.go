@@ -8,7 +8,7 @@ func NewHitableList() HitableList {
 	return make([]Hitable, 0)
 }
 
-func (l *HitableList) Hit(r *geo.Ray, tMin, tMax float64) (bool, HitRecord) {
+func (l *HitableList) Hit(r *geo.Ray, tMin, tMax float32) (bool, HitRecord) {
 	var closestHitRecord HitRecord
 	hitAnything := false
 	closestSoFar := tMax

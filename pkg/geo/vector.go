@@ -1,6 +1,6 @@
 package geo
 
-import "math"
+import "github.com/chewxy/math32"
 
 var Origin = Vec3{0.0, 0.0, 0.0}
 var UnitX = Vec3{1.0, 0.0, 0.0}
@@ -10,26 +10,26 @@ var Diag = Vec3{1.0, 1.0, 1.0}
 
 // Vec3 is a three dimensional vector
 type Vec3 struct {
-	x, y, z float64
+	x, y, z float32
 }
 
 // NewVec constructs a new Vec3
-func NewVec3(x, y, z float64) Vec3 {
+func NewVec3(x, y, z float32) Vec3 {
 	return Vec3{x, y, z}
 }
 
 // X returns the x/first component of v
-func (v Vec3) X() float64 {
+func (v Vec3) X() float32 {
 	return v.x
 }
 
 //Y returns the y/second component of v
-func (v Vec3) Y() float64 {
+func (v Vec3) Y() float32 {
 	return v.y
 }
 
 // Z return the z/third component of v
-func (v Vec3) Z() float64 {
+func (v Vec3) Z() float32 {
 	return v.z
 }
 
@@ -49,7 +49,7 @@ func (v Vec3) Sub(o Vec3) Vec3 {
 }
 
 //Scale scales a Vec3 in place
-func (v *Vec3) Scale(t float64) {
+func (v *Vec3) Scale(t float32) {
 	v.x *= t
 	v.y *= t
 	v.z *= t
@@ -57,12 +57,12 @@ func (v *Vec3) Scale(t float64) {
 
 //Mul returns a new Vec3 where each component is scaled
 // by a factor t
-func (v Vec3) Mul(t float64) Vec3 {
+func (v Vec3) Mul(t float32) Vec3 {
 	return Vec3{v.x * t, v.y * t, v.z * t}
 }
 
 //Dot returns the dot product of v and o
-func (v Vec3) Dot(o Vec3) float64 {
+func (v Vec3) Dot(o Vec3) float32 {
 	return v.x*o.x + v.y*o.y + v.z*o.z
 }
 
@@ -74,13 +74,13 @@ func (v Vec3) Cross(o Vec3) Vec3 {
 }
 
 // LenSq returns the squared length of v
-func (v Vec3) LenSq() float64 {
+func (v Vec3) LenSq() float32 {
 	return v.x*v.x + v.y*v.y + v.z*v.z
 }
 
 // Len returns the length of v
-func (v Vec3) Len() float64 {
-	return math.Sqrt(v.x*v.x + v.y*v.y + v.z*v.z)
+func (v Vec3) Len() float32 {
+	return math32.Sqrt(v.x*v.x + v.y*v.y + v.z*v.z)
 }
 
 // Normed returns a new normalized (unit) Vec3

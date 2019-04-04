@@ -1,9 +1,9 @@
 package tracer
 
 import (
-	"math"
 	"math/rand"
 
+	"github.com/chewxy/math32"
 	"github.com/robquant/tracer/pkg/geo"
 )
 
@@ -21,7 +21,7 @@ type Lambertian struct {
 }
 
 // NewLambertian creates new Lambertian from r,g,b albedo values
-func NewLambertian(ar, ag, ab float64) *Lambertian {
+func NewLambertian(ar, ag, ab float32) *Lambertian {
 	return &Lambertian{albedo: geo.NewVec3(ar, ag, ab)}
 }
 
@@ -34,33 +34,33 @@ func (l *Lambertian) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray)
 // Metal hold albedo for a Metal surface
 type Metal struct {
 	albedo geo.Vec3
-	fuzz   float64
+	fuzz   float32
 }
 
 func reflect(v, n geo.Vec3) geo.Vec3 {
 	return v.Sub(n.Mul(2 * v.Dot(n)))
 }
 
-func refract(v, n geo.Vec3, refRatio float64) (bool, geo.Vec3) {
+func refract(v, n geo.Vec3, refRatio float32) (bool, geo.Vec3) {
 	uv := v.Normed()
 	dt := uv.Dot(n)
 	discriminant := 1.0 - refRatio*refRatio*(1-dt*dt)
 	if discriminant > 0 {
 		refracted := uv.Sub(n.Mul(dt)).Mul(refRatio)
-		refracted = refracted.Sub(n.Mul(math.Sqrt(discriminant)))
+		refracted = refracted.Sub(n.Mul(math32.Sqrt(discriminant)))
 		return true, refracted
 	}
 	return false, geo.Vec3{}
 }
 
-func schlick(cosine, refIdx float64) float64 {
+func schlick(cosine, refIdx float32) float32 {
 	r0 := (1 - refIdx) / (1 + refIdx)
 	r0 = r0 * r0
-	return r0 + (1-r0)*math.Pow(1-cosine, 5)
+	return r0 + (1-r0)*math32.Pow(1-cosine, 5)
 }
 
 // NewMetal constructs a new Metal from r,g,b albedo values
-func NewMetal(ar, ag, ab float64, fuzz float64) *Metal {
+func NewMetal(ar, ag, ab float32, fuzz float32) *Metal {
 	if fuzz > 1 {
 		fuzz = 1
 	}
@@ -75,10 +75,10 @@ func (m *Metal) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray) {
 }
 
 type Dielectric struct {
-	refIdx float64
+	refIdx float32
 }
 
-func NewDielectric(refIdx float64) *Dielectric {
+func NewDielectric(refIdx float32) *Dielectric {
 	return &Dielectric{refIdx: refIdx}
 }
 
@@ -86,9 +86,9 @@ func (d *Dielectric) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray)
 	reflected := reflect(r.Dir(), h.Normal())
 	attenuation := geo.NewVec3(1.0, 1.0, 1.0)
 	var outwardNormal geo.Vec3
-	var refRatio float64
-	var cosine float64
-	reflectionProb := 1.0
+	var refRatio float32
+	var cosine float32
+	var reflectionProb float32 = 1.0
 	s := r.Dir().Dot(h.Normal())
 	if s > 0 {
 		outwardNormal = h.Normal().Mul(-1)
@@ -104,7 +104,7 @@ func (d *Dielectric) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray)
 	if refracted, refractedDir = refract(r.Dir(), outwardNormal, refRatio); refracted {
 		reflectionProb = schlick(cosine, d.refIdx)
 	}
-	if rand.Float64() < reflectionProb {
+	if rand.Float32() < reflectionProb {
 		return true, attenuation, geo.NewRay(h.P(), reflected)
 	}
 	return true, attenuation, geo.NewRay(h.P(), refractedDir)

@@ -13,22 +13,22 @@ type Color struct {
 }
 
 // NewColor creates a new Color from RGB float values
-func NewColor(r, g, b float64) Color {
+func NewColor(r, g, b float32) Color {
 	return Color{geo.NewVec3(r, g, b)}
 }
 
 // R returns the red component of c
-func (c Color) R() float64 {
+func (c Color) R() float32 {
 	return c.X()
 }
 
 // G returns the green component of c
-func (c Color) G() float64 {
+func (c Color) G() float32 {
 	return c.Y()
 }
 
 // B returns the blue component of c
-func (c Color) B() float64 {
+func (c Color) B() float32 {
 	return c.Z()
 }
 
@@ -36,7 +36,7 @@ func (c Color) Add(o Color) Color {
 	return Color{c.Vec3.Add(o.Vec3)}
 }
 
-func (c Color) Mul(t float64) Color {
+func (c Color) Mul(t float32) Color {
 	return Color{c.Vec3.Mul(t)}
 }
 

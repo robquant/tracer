@@ -4,13 +4,13 @@ import "github.com/robquant/tracer/pkg/geo"
 
 // HitRecord
 type HitRecord struct {
-	t        float64
+	t        float32
 	p        geo.Vec3
 	normal   geo.Vec3
 	material Material
 }
 
-func NewHitRecord(t float64, p, normal geo.Vec3, material Material) HitRecord {
+func NewHitRecord(t float32, p, normal geo.Vec3, material Material) HitRecord {
 	return HitRecord{t, p, normal, material}
 }
 
@@ -27,5 +27,5 @@ func (h HitRecord) Material() Material {
 }
 
 type Hitable interface {
-	Hit(r *geo.Ray, tMin, tMax float64) (bool, HitRecord)
+	Hit(r *geo.Ray, tMin, tMax float32) (bool, HitRecord)
 }

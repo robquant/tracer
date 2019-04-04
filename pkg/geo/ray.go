@@ -4,7 +4,7 @@ package geo
 // and a direction dir
 type Ray struct {
 	orig, dir Vec3
-	lenSq     float64
+	lenSq     float32
 }
 
 // NewRay constructs a new Ray from on origin and direction
@@ -25,10 +25,10 @@ func (r *Ray) Dir() Vec3 {
 
 // At calculates a position on the ray
 // as orig + t * dir
-func (r *Ray) At(t float64) Vec3 {
+func (r *Ray) At(t float32) Vec3 {
 	return r.orig.Add(r.dir.Mul(t))
 }
 
-func (r *Ray) LenSq() float64 {
+func (r *Ray) LenSq() float32 {
 	return r.lenSq
 }
