@@ -8,7 +8,9 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"runtime"
 	"runtime/pprof"
+	"sync"
 
 	"github.com/chewxy/math32"
 	"github.com/robquant/tracer/pkg/geo"
@@ -75,8 +77,8 @@ func main() {
 		}
 		defer pprof.StopCPUProfile()
 	}
-	nx := 600
-	ny := 400
+	nx := 1200
+	ny := 800
 	ns := 10
 	img := image.NewRGBA(image.Rect(0, 0, nx, ny))
 	lookAt := geo.NewVec3(0, 0, 0)
@@ -85,23 +87,33 @@ func main() {
 	aperture := float32(1 / 10.0)
 	camera := tracer.NewCamera(lookFrom, lookAt, geo.UnitY, 20, float32(nx)/float32(ny), aperture, distToFocus)
 	world := randomScene()
-	for y := 0; y < ny; y++ {
-		for x := 0; x < nx; x++ {
-			col := tracer.NewColor(0, 0, 0)
-			for s := 0; s < ns; s++ {
-				u := (float32(x) + rand.Float32()) / float32(nx)
-				v := (float32(ny-y) + rand.Float32()) / float32(ny)
-				ray := camera.GetRay(u, v)
-				col = col.Add(colorAt(ray, world, 0))
+
+	ncpu := runtime.NumCPU()
+	wg := sync.WaitGroup{}
+	for cpu := 0; cpu < ncpu; cpu++ {
+		go func(ystart, yend int) {
+			wg.Add(1)
+			for y := ystart; y < yend; y++ {
+				for x := 0; x < nx; x++ {
+					col := tracer.NewColor(0, 0, 0)
+					for s := 0; s < ns; s++ {
+						u := (float32(x) + rand.Float32()) / float32(nx)
+						v := (float32(ny-y) + rand.Float32()) / float32(ny)
+						ray := camera.GetRay(u, v)
+						col = col.Add(colorAt(ray, world, 0))
+					}
+					col.Scale(1. / float32(ns))
+					col = tracer.NewColor(math32.Sqrt(col.R()), math32.Sqrt(col.G()), math32.Sqrt(col.B()))
+					ir := uint8(math.Round(float64(255 * col.R())))
+					ig := uint8(math.Round(float64(255 * col.G())))
+					ib := uint8(math.Round(float64(255 * col.B())))
+					img.SetRGBA(x, y, color.RGBA{ir, ig, ib, 255})
+				}
 			}
-			col.Scale(1. / float32(ns))
-			col = tracer.NewColor(math32.Sqrt(col.R()), math32.Sqrt(col.G()), math32.Sqrt(col.B()))
-			ir := uint8(math.Round(float64(255 * col.R())))
-			ig := uint8(math.Round(float64(255 * col.G())))
-			ib := uint8(math.Round(float64(255 * col.B())))
-			img.SetRGBA(x, y, color.RGBA{ir, ig, ib, 255})
-		}
+			wg.Done()
+		}(cpu*ny/ncpu, (cpu+1)*ny/ncpu)
 	}
+	wg.Wait()
 
 	f, err := os.Create("image.png")
 	if err != nil {
