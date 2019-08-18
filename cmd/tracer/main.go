@@ -1,7 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"log"
 	"math"
 	"math/rand"
@@ -13,12 +15,12 @@ import (
 	"github.com/robquant/tracer/pkg/tracer"
 )
 
-func color(r *geo.Ray, world tracer.Hitable, depth int) tracer.Color {
+func colorAt(r *geo.Ray, world tracer.Hitable, depth int) tracer.Color {
 	if hit, rec := world.Hit(r, 0.001, math.MaxFloat32); hit {
 		if depth < 50 {
 			didscatter, attenuation, scattered := rec.Material().Scatter(r, &rec)
 			if didscatter {
-				return color(&scattered, world, depth+1).MulVec(attenuation)
+				return colorAt(&scattered, world, depth+1).MulVec(attenuation)
 			} else {
 				return tracer.Black
 			}
@@ -73,31 +75,45 @@ func main() {
 		}
 		defer pprof.StopCPUProfile()
 	}
-	nx := 1200
-	ny := 800
+	nx := 600
+	ny := 400
 	ns := 10
-	fmt.Printf("P3 %d %d\n255\n", nx, ny)
+	img := image.NewRGBA(image.Rect(0, 0, nx, ny))
 	lookAt := geo.NewVec3(0, 0, 0)
 	lookFrom := geo.NewVec3(13, 2, 3)
 	distToFocus := float32(10.0)
 	aperture := float32(1 / 10.0)
 	camera := tracer.NewCamera(lookFrom, lookAt, geo.UnitY, 20, float32(nx)/float32(ny), aperture, distToFocus)
 	world := randomScene()
-	for j := ny - 1; j >= 0; j-- {
-		for i := 0; i < nx; i++ {
+	for y := 0; y < ny; y++ {
+		for x := 0; x < nx; x++ {
 			col := tracer.NewColor(0, 0, 0)
 			for s := 0; s < ns; s++ {
-				u := (float32(i) + rand.Float32()) / float32(nx)
-				v := (float32(j) + rand.Float32()) / float32(ny)
+				u := (float32(x) + rand.Float32()) / float32(nx)
+				v := (float32(ny-y) + rand.Float32()) / float32(ny)
 				ray := camera.GetRay(u, v)
-				col = col.Add(color(ray, world, 0))
+				col = col.Add(colorAt(ray, world, 0))
 			}
 			col.Scale(1. / float32(ns))
 			col = tracer.NewColor(math32.Sqrt(col.R()), math32.Sqrt(col.G()), math32.Sqrt(col.B()))
-			ir := int(math.Round(float64(255 * col.R())))
-			ig := int(math.Round(float64(255 * col.G())))
-			ib := int(math.Round(float64(255 * col.B())))
-			fmt.Printf("%d %d %d\n", ir, ig, ib)
+			ir := uint8(math.Round(float64(255 * col.R())))
+			ig := uint8(math.Round(float64(255 * col.G())))
+			ib := uint8(math.Round(float64(255 * col.B())))
+			img.SetRGBA(x, y, color.RGBA{ir, ig, ib, 255})
 		}
+	}
+
+	f, err := os.Create("image.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := png.Encode(f, img); err != nil {
+		f.Close()
+		log.Fatal(err)
+	}
+
+	if err := f.Close(); err != nil {
+		log.Fatal(err)
 	}
 }
