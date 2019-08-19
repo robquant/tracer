@@ -91,8 +91,8 @@ func main() {
 	ncpu := runtime.NumCPU()
 	wg := sync.WaitGroup{}
 	for cpu := 0; cpu < ncpu; cpu++ {
+		wg.Add(1)
 		go func(ystart, yend int) {
-			wg.Add(1)
 			for y := ystart; y < yend; y++ {
 				for x := 0; x < nx; x++ {
 					col := tracer.NewColor(0, 0, 0)
