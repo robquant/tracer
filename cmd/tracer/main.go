@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"image"
 	"image/color"
 	"image/png"
@@ -77,9 +78,15 @@ func main() {
 		}
 		defer pprof.StopCPUProfile()
 	}
-	nx := 1200
-	ny := 800
-	ns := 10
+
+	var nx, ny, ns int
+	var outfname string
+	flag.IntVar(&nx, "nx", 600, "X resolution")
+	flag.IntVar(&ny, "ny", 400, "Y resolution")
+	flag.IntVar(&ns, "ns", 10, "samples per pixel")
+	flag.StringVar(&outfname, "out", "image.png", "output file name")
+	flag.Parse()
+
 	img := image.NewRGBA(image.Rect(0, 0, nx, ny))
 	lookAt := geo.NewVec3(0, 0, 0)
 	lookFrom := geo.NewVec3(13, 2, 3)
@@ -115,7 +122,7 @@ func main() {
 	}
 	wg.Wait()
 
-	f, err := os.Create("image.png")
+	f, err := os.Create(outfname)
 	if err != nil {
 		log.Fatal(err)
 	}
