@@ -66,6 +66,13 @@ func randomScene() *tracer.HitableList {
 	return &scene
 }
 
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func main() {
 	if pr := os.Getenv("CPUPROFILE"); pr != "" {
 		p, err := os.Create(pr)
@@ -79,11 +86,12 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	var nx, ny, ns int
+	var nx, ny, ns, np int
 	var outfname string
 	flag.IntVar(&nx, "nx", 600, "X resolution")
 	flag.IntVar(&ny, "ny", 400, "Y resolution")
 	flag.IntVar(&ns, "ns", 10, "samples per pixel")
+	flag.IntVar(&np, "np", runtime.NumCPU(), "number of parallel renderers")
 	flag.StringVar(&outfname, "out", "image.png", "output file name")
 	flag.Parse()
 
@@ -95,31 +103,40 @@ func main() {
 	camera := tracer.NewCamera(lookFrom, lookAt, geo.UnitY, 20, float32(nx)/float32(ny), aperture, distToFocus)
 	world := randomScene()
 
-	ncpu := runtime.NumCPU()
 	wg := sync.WaitGroup{}
-	for cpu := 0; cpu < ncpu; cpu++ {
+	blockQueue := make(chan image.Rectangle)
+	for cpu := 0; cpu < np; cpu++ {
 		wg.Add(1)
-		go func(ystart, yend int) {
-			for y := ystart; y < yend; y++ {
-				for x := 0; x < nx; x++ {
-					col := tracer.NewColor(0, 0, 0)
-					for s := 0; s < ns; s++ {
-						u := (float32(x) + rand.Float32()) / float32(nx)
-						v := (float32(ny-y) + rand.Float32()) / float32(ny)
-						ray := camera.GetRay(u, v)
-						col = col.Add(colorAt(ray, world, 0))
+		go func(queue <-chan image.Rectangle) {
+			for block := range queue {
+				for y := block.Min.Y; y < block.Max.Y; y++ {
+					for x := block.Min.X; x < block.Max.X; x++ {
+						col := tracer.NewColor(0, 0, 0)
+						for s := 0; s < ns; s++ {
+							u := (float32(x) + rand.Float32()) / float32(nx)
+							v := (float32(ny-y) + rand.Float32()) / float32(ny)
+							ray := camera.GetRay(u, v)
+							col = col.Add(colorAt(ray, world, 0))
+						}
+						col.Scale(1. / float32(ns))
+						col = tracer.NewColor(math32.Sqrt(col.R()), math32.Sqrt(col.G()), math32.Sqrt(col.B()))
+						ir := uint8(math.Round(float64(255 * col.R())))
+						ig := uint8(math.Round(float64(255 * col.G())))
+						ib := uint8(math.Round(float64(255 * col.B())))
+						img.SetRGBA(x, y, color.RGBA{ir, ig, ib, 255})
 					}
-					col.Scale(1. / float32(ns))
-					col = tracer.NewColor(math32.Sqrt(col.R()), math32.Sqrt(col.G()), math32.Sqrt(col.B()))
-					ir := uint8(math.Round(float64(255 * col.R())))
-					ig := uint8(math.Round(float64(255 * col.G())))
-					ib := uint8(math.Round(float64(255 * col.B())))
-					img.SetRGBA(x, y, color.RGBA{ir, ig, ib, 255})
 				}
 			}
 			wg.Done()
-		}(cpu*ny/ncpu, (cpu+1)*ny/ncpu)
+		}(blockQueue)
 	}
+	for x := 0; x <= nx; x += 50 {
+		for y := 0; y <= ny; y += 50 {
+			r := image.Rect(x, y, min(x+50, nx), min(y+50, ny))
+			blockQueue <- r
+		}
+	}
+	close(blockQueue)
 	wg.Wait()
 
 	f, err := os.Create(outfname)
