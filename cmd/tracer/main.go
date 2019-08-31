@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -49,7 +50,7 @@ func randomMaterial() tracer.Material {
 	return tracer.NewDielectric(1.5)
 }
 
-func randomScene() *tracer.HitableList {
+func randomScene() tracer.HitableList {
 	scene := tracer.NewHitableList()
 	scene = append(scene, tracer.NewSphere(geo.NewVec3(0, -1000, 0), 1000, tracer.NewLambertian(0.5, 0.5, 0.5)))
 	for a := -11; a < 11; a++ {
@@ -63,7 +64,7 @@ func randomScene() *tracer.HitableList {
 	scene = append(scene, tracer.NewSphere(geo.NewVec3(0, 1, 0), 1.0, tracer.NewDielectric(1.5)))
 	scene = append(scene, tracer.NewSphere(geo.NewVec3(-4, 1, 0), 1.0, tracer.NewLambertian(0.4, 0.2, 0.1)))
 	scene = append(scene, tracer.NewSphere(geo.NewVec3(4, 1, 0), 1.0, tracer.NewMetal(0.7, 0.6, 0.5, 0)))
-	return &scene
+	return scene
 }
 
 func min(a, b int) int {
@@ -101,7 +102,7 @@ func main() {
 	distToFocus := float32(10.0)
 	aperture := float32(1 / 10.0)
 	camera := tracer.NewCamera(lookFrom, lookAt, geo.UnitY, 20, float32(nx)/float32(ny), aperture, distToFocus)
-	world := randomScene()
+	world := tracer.NewBvhNodeFromList(randomScene())
 
 	wg := sync.WaitGroup{}
 	blockQueue := make(chan image.Rectangle)
@@ -116,7 +117,7 @@ func main() {
 							u := (float32(x) + rand.Float32()) / float32(nx)
 							v := (float32(ny-y) + rand.Float32()) / float32(ny)
 							ray := camera.GetRay(u, v)
-							col = col.Add(colorAt(ray, world, 0))
+							col = col.Add(colorAt(ray, &world, 0))
 						}
 						col.Scale(1. / float32(ns))
 						col = tracer.NewColor(math32.Sqrt(col.R()), math32.Sqrt(col.G()), math32.Sqrt(col.B()))
@@ -152,4 +153,5 @@ func main() {
 	if err := f.Close(); err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("%d\n", tracer.SphereCounter)
 }

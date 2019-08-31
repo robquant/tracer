@@ -28,4 +28,5 @@ func (h HitRecord) Material() Material {
 
 type Hitable interface {
 	Hit(r *geo.Ray, tMin, tMax float32) (bool, HitRecord)
+	BoundingBox() (bool, geo.Aabb)
 }
