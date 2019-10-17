@@ -1,8 +1,6 @@
 package tracer
 
 import (
-	"math/rand"
-
 	"github.com/chewxy/math32"
 	"github.com/robquant/tracer/pkg/geo"
 )
@@ -27,8 +25,8 @@ func NewLambertian(ar, ag, ab float32) *Lambertian {
 
 // Scatter implements Material Scatter interface for Lambertian
 func (l *Lambertian) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray) {
-	target := h.P().Add(h.Normal()).Add(RandomInUnitSphere())
-	return true, l.albedo, geo.NewRay(h.P(), target.Sub(h.P()))
+	target := h.P().Add(h.Normal()).Add(RandomInUnitSphere(r.Rand))
+	return true, l.albedo, geo.NewRay(h.P(), target.Sub(h.P()), r.Rand)
 }
 
 // Metal hold albedo for a Metal surface
@@ -70,7 +68,7 @@ func NewMetal(ar, ag, ab float32, fuzz float32) *Metal {
 // Scatter implements the Material interface Scatter function for Metal
 func (m *Metal) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray) {
 	reflected := reflect(r.Dir().Normed(), h.Normal())
-	scattered := geo.NewRay(h.P(), reflected.Add(RandomInUnitSphere().Mul(m.fuzz)))
+	scattered := geo.NewRay(h.P(), reflected.Add(RandomInUnitSphere(r.Rand).Mul(m.fuzz)), r.Rand)
 	return scattered.Dir().Dot(h.Normal()) > 0, m.albedo, scattered
 }
 
@@ -104,8 +102,8 @@ func (d *Dielectric) Scatter(r *geo.Ray, h *HitRecord) (bool, geo.Vec3, geo.Ray)
 	if refracted, refractedDir = refract(r.Dir(), outwardNormal, refRatio); refracted {
 		reflectionProb = schlick(cosine, d.refIdx)
 	}
-	if rand.Float32() < reflectionProb {
-		return true, attenuation, geo.NewRay(h.P(), reflected)
+	if r.Rand.Float32() < reflectionProb {
+		return true, attenuation, geo.NewRay(h.P(), reflected, r.Rand)
 	}
-	return true, attenuation, geo.NewRay(h.P(), refractedDir)
+	return true, attenuation, geo.NewRay(h.P(), refractedDir, r.Rand)
 }

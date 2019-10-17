@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"sync"
+	"time"
 
 	"github.com/chewxy/math32"
 	"github.com/robquant/tracer/pkg/geo"
@@ -96,27 +97,35 @@ func main() {
 	flag.StringVar(&outfname, "out", "image.png", "output file name")
 	flag.Parse()
 
+	blockSize := 50
+
+	radius := float32(15)
+	world := tracer.NewBvhNodeFromList(randomScene())
+	angle := 60.
 	img := image.NewRGBA(image.Rect(0, 0, nx, ny))
 	lookAt := geo.NewVec3(0, 0, 0)
-	lookFrom := geo.NewVec3(13, 2, 3)
+	x := math32.Sin(float32(angle)*math32.Pi/180) * radius
+	z := math32.Cos(float32(angle)*math32.Pi/180) * radius
+	lookFrom := geo.NewVec3(x, 2., z)
 	distToFocus := float32(10.0)
 	aperture := float32(1 / 10.0)
 	camera := tracer.NewCamera(lookFrom, lookAt, geo.UnitY, 20, float32(nx)/float32(ny), aperture, distToFocus)
-	world := tracer.NewBvhNodeFromList(randomScene())
 
+	start := time.Now()
 	wg := sync.WaitGroup{}
 	blockQueue := make(chan image.Rectangle)
 	for cpu := 0; cpu < np; cpu++ {
 		wg.Add(1)
 		go func(queue <-chan image.Rectangle) {
+			randGen := rand.New(rand.NewSource(time.Now().UnixNano()))
 			for block := range queue {
 				for y := block.Min.Y; y < block.Max.Y; y++ {
 					for x := block.Min.X; x < block.Max.X; x++ {
 						col := tracer.NewColor(0, 0, 0)
 						for s := 0; s < ns; s++ {
-							u := (float32(x) + rand.Float32()) / float32(nx)
-							v := (float32(ny-y) + rand.Float32()) / float32(ny)
-							ray := camera.GetRay(u, v)
+							u := (float32(x) + randGen.Float32()) / float32(nx)
+							v := (float32(ny-y) + randGen.Float32()) / float32(ny)
+							ray := camera.GetRay(u, v, randGen)
 							col = col.Add(colorAt(ray, &world, 0))
 						}
 						col.Scale(1. / float32(ns))
@@ -131,9 +140,9 @@ func main() {
 			wg.Done()
 		}(blockQueue)
 	}
-	for x := 0; x <= nx; x += 50 {
-		for y := 0; y <= ny; y += 50 {
-			r := image.Rect(x, y, min(x+50, nx), min(y+50, ny))
+	for x := 0; x <= nx; x += blockSize {
+		for y := 0; y <= ny; y += blockSize {
+			r := image.Rect(x, y, min(x+blockSize, nx), min(y+blockSize, ny))
 			blockQueue <- r
 		}
 	}
@@ -153,5 +162,5 @@ func main() {
 	if err := f.Close(); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d\n", tracer.SphereCounter)
+	fmt.Printf("%s took %v\n", outfname, time.Since(start))
 }

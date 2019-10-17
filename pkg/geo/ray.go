@@ -1,16 +1,19 @@
 package geo
 
+import "math/rand"
+
 // Ray represents a ray with an origin orig
 // and a direction dir
 type Ray struct {
 	orig, dir Vec3
 	lenSq     float32
+	Rand      *rand.Rand
 }
 
 // NewRay constructs a new Ray from on origin and direction
-func NewRay(orig, dir Vec3) Ray {
+func NewRay(orig, dir Vec3, randGen *rand.Rand) Ray {
 	lenSq := dir.LenSq()
-	return Ray{orig: orig, dir: dir, lenSq: lenSq}
+	return Ray{orig: orig, dir: dir, lenSq: lenSq, Rand: randGen}
 }
 
 // Orig returns the rays direction

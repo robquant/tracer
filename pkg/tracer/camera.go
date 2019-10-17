@@ -36,19 +36,19 @@ func NewCamera(lookFrom, lookAt, vUp geo.Vec3, vertFov, aspectRatio, aperture, f
 	return &Camera{lookFrom, lowerLeftCorner, horizontal, vertical, u, v, w, lensRadius}
 }
 
-func randomInUnitDisk() geo.Vec3 {
+func randomInUnitDisk(randGen *rand.Rand) geo.Vec3 {
 	vec := geo.NewVec3(1.0, 1.0, 0.0)
 	diag2D := geo.NewVec3(1, 1, 0)
 	for vec.LenSq() >= 1.0 {
-		vec = geo.NewVec3(rand.Float32(), rand.Float32(), 0).Mul(2.0).Sub(diag2D)
+		vec = geo.NewVec3(randGen.Float32(), randGen.Float32(), 0).Mul(2.0).Sub(diag2D)
 	}
 	return vec
 }
 
-func (c *Camera) GetRay(s, t float32) *geo.Ray {
-	rd := randomInUnitDisk().Mul(c.lensRadius)
+func (c *Camera) GetRay(s, t float32, randGen *rand.Rand) *geo.Ray {
+	rd := randomInUnitDisk(randGen).Mul(c.lensRadius)
 	offset := c.u.Mul(rd.X()).Add(c.v.Mul(rd.Y()))
 	dir := c.lowerLeftCorner.Add(c.horizontal.Mul(s)).Add(c.vertical.Mul(t)).Sub(c.origin).Sub(offset)
-	r := geo.NewRay(c.origin.Add(offset), dir)
+	r := geo.NewRay(c.origin.Add(offset), dir, randGen)
 	return &r
 }

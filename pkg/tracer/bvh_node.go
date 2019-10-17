@@ -1,7 +1,6 @@
 package tracer
 
 import (
-	"fmt"
 	"math"
 	"sort"
 
@@ -18,7 +17,6 @@ func NewBvhNode(box geo.Aabb) BvhNode {
 }
 
 func NewBvhNodeFromList(l HitableList) BvhNode {
-	fmt.Printf("%d\n", len(l))
 	_, mainBox := l.BoundingBox()
 	leftArea := make([]float32, len(l))
 	rightArea := make([]float32, len(l))
@@ -67,13 +65,13 @@ func NewBvhNodeFromList(l HitableList) BvhNode {
 	}
 	var left, right Hitable
 	if minSAHIdx == 0 {
-		left = l
+		left = l[0]
 	} else {
 		temp := NewBvhNodeFromList(l[:minSAHIdx+1])
 		left = &temp
 	}
 	if minSAHIdx == len(l)-2 {
-		right = l[minSAHIdx+1:]
+		right = l[minSAHIdx+1]
 	} else {
 		temp := NewBvhNodeFromList(l[minSAHIdx+1:])
 		right = &temp
