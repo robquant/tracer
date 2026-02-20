@@ -19,8 +19,8 @@ func NewSphere(center geo.Vec3, r float32, m Material) *Sphere {
 	return &Sphere{center, r, m}
 }
 
-// Hit calculates if geo.Ray r hits the sphere betwenn tMin and tMax
-func (s *Sphere) Hit(r *geo.Ray, tMin, tMax float32) (bool, HitRecord) {
+// Hit calculates if geo.Ray r hits the sphere between tMin and tMax
+func (s *Sphere) Hit(r *geo.Ray, tMin, tMax float32, rec *HitRecord) bool {
 	oc := r.Orig().Sub(s.center)
 	a := r.LenSq()
 	b := r.Dir().Dot(oc)
@@ -31,15 +31,23 @@ func (s *Sphere) Hit(r *geo.Ray, tMin, tMax float32) (bool, HitRecord) {
 		temp := (-b - sqrt) / a
 		if temp < tMax && temp > tMin {
 			p := r.At(temp)
-			return true, NewHitRecord(temp, p, p.Sub(s.center).Mul(1.0/s.radius), s.material)
+			rec.t = temp
+			rec.p = p
+			rec.normal = p.Sub(s.center).Mul(1.0 / s.radius)
+			rec.material = s.material
+			return true
 		}
 		temp = (-b + sqrt) / a
 		if temp < tMax && temp > tMin {
 			p := r.At(temp)
-			return true, NewHitRecord(temp, p, p.Sub(s.center).Mul(1.0/s.radius), s.material)
+			rec.t = temp
+			rec.p = p
+			rec.normal = p.Sub(s.center).Mul(1.0 / s.radius)
+			rec.material = s.material
+			return true
 		}
 	}
-	return false, HitRecord{}
+	return false
 }
 
 func (s *Sphere) BoundingBox() (bool, geo.Aabb) {

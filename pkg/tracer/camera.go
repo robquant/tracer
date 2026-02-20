@@ -45,10 +45,9 @@ func randomInUnitDisk(randGen *rand.Rand) geo.Vec3 {
 	return vec
 }
 
-func (c *Camera) GetRay(s, t float32, randGen *rand.Rand) *geo.Ray {
+func (c *Camera) GetRay(s, t float32, randGen *rand.Rand) geo.Ray {
 	rd := randomInUnitDisk(randGen).Mul(c.lensRadius)
 	offset := c.u.Mul(rd.X()).Add(c.v.Mul(rd.Y()))
 	dir := c.lowerLeftCorner.Add(c.horizontal.Mul(s)).Add(c.vertical.Mul(t)).Sub(c.origin).Sub(offset)
-	r := geo.NewRay(c.origin.Add(offset), dir, randGen)
-	return &r
+	return geo.NewRay(c.origin.Add(offset), dir)
 }

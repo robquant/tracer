@@ -1,5 +1,5 @@
 module github.com/robquant/tracer
 
-go 1.17
+go 1.26
 
-require github.com/chewxy/math32 v1.10.1
+require github.com/chewxy/math32 v1.11.1

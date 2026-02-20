@@ -8,18 +8,18 @@ func NewHitableList() HitableList {
 	return make([]Hitable, 0)
 }
 
-func (l HitableList) Hit(r *geo.Ray, tMin, tMax float32) (bool, HitRecord) {
-	var closestHitRecord HitRecord
+func (l HitableList) Hit(r *geo.Ray, tMin, tMax float32, rec *HitRecord) bool {
+	var tempRec HitRecord
 	hitAnything := false
 	closestSoFar := tMax
 	for _, hitable := range l {
-		if hit, hitRecord := hitable.Hit(r, tMin, closestSoFar); hit {
+		if hitable.Hit(r, tMin, closestSoFar, &tempRec) {
 			hitAnything = true
-			closestSoFar = hitRecord.t
-			closestHitRecord = hitRecord
+			closestSoFar = tempRec.t
+			*rec = tempRec
 		}
 	}
-	return hitAnything, closestHitRecord
+	return hitAnything
 }
 
 func (l HitableList) BoundingBox() (bool, geo.Aabb) {

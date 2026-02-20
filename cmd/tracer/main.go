@@ -20,22 +20,27 @@ import (
 	"github.com/robquant/tracer/pkg/tracer"
 )
 
-func colorAt(r *geo.Ray, world tracer.Hitable, depth int) tracer.Color {
-	if hit, rec := world.Hit(r, 0.001, math.MaxFloat32); hit {
-		if depth < 50 {
-			didscatter, attenuation, scattered := rec.Material().Scatter(r, &rec)
-			if didscatter {
-				return colorAt(&scattered, world, depth+1).MulVec(attenuation)
-			} else {
-				return tracer.Black
-			}
+func colorAt(r *geo.Ray, world *tracer.BvhNode, maxDepth int, rng *rand.Rand) tracer.Color {
+	attenuation := tracer.NewColor(1, 1, 1)
+	currentRay := *r
+	var rec tracer.HitRecord
+	for depth := 0; depth < maxDepth; depth++ {
+		if !world.Hit(&currentRay, 0.001, math.MaxFloat32, &rec) {
+			break
 		}
+		ok, atten, scattered := rec.Material().Scatter(&currentRay, &rec, rng)
+		if !ok {
+			return tracer.Black
+		}
+		attenuation = attenuation.MulVec(atten)
+		currentRay = scattered
 	}
-	unitDirection := r.Dir().Normed()
+	unitDirection := currentRay.Dir().Normed()
 	t := 0.5 * (unitDirection.Y() + 1.0)
 	c1 := geo.NewVec3(1.0, 1.0, 1.0).Mul(1.0 - t)
 	c2 := geo.NewVec3(0.5, 0.7, 1.0).Mul(t)
-	return tracer.Color{Vec3: c1.Add(c2)}
+	sky := tracer.Color{Vec3: c1.Add(c2)}
+	return attenuation.MulVec(sky.Vec3)
 }
 
 func randomMaterial() tracer.Material {
@@ -66,13 +71,6 @@ func randomScene() tracer.HitableList {
 	scene = append(scene, tracer.NewSphere(geo.NewVec3(-4, 1, 0), 1.0, tracer.NewLambertian(0.4, 0.2, 0.1)))
 	scene = append(scene, tracer.NewSphere(geo.NewVec3(4, 1, 0), 1.0, tracer.NewMetal(0.7, 0.6, 0.5, 0)))
 	return scene
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 func main() {
@@ -126,7 +124,7 @@ func main() {
 							u := (float32(x) + randGen.Float32()) / float32(nx)
 							v := (float32(ny-y) + randGen.Float32()) / float32(ny)
 							ray := camera.GetRay(u, v, randGen)
-							col = col.Add(colorAt(ray, &world, 0))
+							col = col.Add(colorAt(&ray, &world, 50, randGen))
 						}
 						col.Scale(1. / float32(ns))
 						col = tracer.NewColor(math32.Sqrt(col.R()), math32.Sqrt(col.G()), math32.Sqrt(col.B()))
